@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎈 Past Tense Verbs Balloon Game</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Comic Sans MS', 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 10px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .header {
+    background: rgba(255,255,255,0.95);
+    border-radius: 15px;
+    padding: 10px 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    margin-bottom: 8px;
+  }
+  .title {
+    font-size: clamp(16px, 4vw, 22px);
+    font-weight: bold;
+    text-align: center;
+    color: #4a4a8a;
+    margin-bottom: 6px;
+  }
+  .stats {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: clamp(12px, 3vw, 16px);
+    font-weight: bold;
+  }
+  .stat {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    padding: 5px 10px;
+    border-radius: 20px;
+    color: #333;
+  }
+  .target {
+    text-align: center;
+    font-size: clamp(15px, 4vw, 20px);
+    font-weight: bold;
+    padding: 10px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 15px;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+  .target.regular { color: #2196F3; }
+  .target.irregular { color: #E91E63; }
+  .game-area {
+    flex: 1;
+    background: linear-gradient(to bottom, #87CEEB 0%, #B0E0E6 100%);
+    border-radius: 15px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    border: 4px solid white;
+  }
+  .balloon {
+    position: absolute;
+    width: 75px;
+    height: 95px;
+    cursor: pointer;
+    transition: transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    border-radius: 50% 50% 50% 50% / 55% 55% 45% 45%;
+    box-shadow: inset -8px -10px 20px rgba(0,0,0,0.2), 0 5px 15px rgba(0,0,0,0.3);
+  }
+  .balloon::before {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid currentColor;
+  }
+  .balloon::after {
+    content: '';
+    position: absolute;
+    bottom: -45px;
+    left: 50%;
+    width: 1px;
+    height: 40px;
+    background: rgba(255,255,255,0.7);
+  }
+  .balloon:hover { transform: scale(1.1); }
+  .balloon.popping {
+    animation: pop 0.3s ease-out forwards;
+  }
+  @keyframes pop {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.7; }
+    100% { transform: scale(0); opacity: 0; }
+  }
+  .feedback {
+    position: absolute;
+    font-size: 28px;
+    font-weight: bold;
+    pointer-events: none;
+    animation: floatUp 1s ease-out forwards;
+    z-index: 100;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-60px); opacity: 0; }
+  }
+  .overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 20px;
+  }
+  .modal {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    text-align: center;
+    max-width: 90%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+  .modal h2 {
+    font-size: clamp(20px, 5vw, 28px);
+    color: #4a4a8a;
+    margin-bottom: 15px;
+  }
+  .modal p {
+    margin: 8px 0;
+    font-size: clamp(14px, 3.5vw, 18px);
+  }
+  .legend {
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+    margin: 15px 0;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    padding: 8px 14px;
+    border-radius: 10px;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  .btn {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: clamp(15px, 4vw, 18px);
+    font-weight: bold;
+    border-radius: 25px;
+    cursor: pointer;
+    margin-top: 15px;
+    box-shadow: 0 4px 15px rgba(245,87,108,0.4);
+    transition: transform 0.2s;
+  }
+  .btn:hover { transform: scale(1.05); }
+  .instructions {
+    text-align: left;
+    background: #f0f4ff;
+    padding: 12px;
+    border-radius: 10px;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  .instructions div { margin: 4px 0; }
+  .hidden { display: none !important; }
+  .ready-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: clamp(28px, 8vw, 60px);
+    font-weight: bold;
+    color: white;
+    text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+    z-index: 50;
+    text-align: center;
+  }
+  .countdown {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: rgba(255,255,255,0.9);
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-weight: bold;
+    color: #4a4a8a;
+    font-size: 14px;
+    z-index: 30;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="title">🎈 Past Tense Verbs Balloon Game</div>
+    <div class="stats">
+      <div class="stat">⭐ <span id="score">0</span></div>
+      <div class="stat">❤️ <span id="lives">6</span></div>
+      <div class="stat">⏱️ <span id="time">60</span>s</div>
+      <div class="stat">🎯 Lv.<span id="level">1</span></div>
+    </div>
+  </div>
+  <div class="target" id="target">Press START to begin!</div>
+  <div class="game-area" id="gameArea">
+    <div class="ready-text" id="readyText">🎈<br>Press START!</div>
+    <div class="countdown hidden" id="countdown">🔄 Switch in <span id="switchTime">20</span>s</div>
+  </div>
+</div>
+
+<div class="overlay" id="startScreen">
+  <div class="modal">
+    <h2>🎈 Past Tense Verbs Game</h2>
+    <p style="font-weight:bold;color:#666;">Pop the balloons with the correct verb type!</p>
+    <div class="legend">
+      <div class="legend-item" style="background:#2196F3;">📘 Regular Verbs</div>
+      <div class="legend-item" style="background:#E91E63;">📕 Irregular Verbs</div>
+    </div>
+    <div class="instructions">
+      <div>🎯 Pop the correct balloons (matches target type)</div>
+      <div>⭐ Correct +10 points | ❌ Wrong: lose 1 life</div>
+      <div>⏱️ 60-second challenge | ❤️ 6 lives</div>
+      <div>🔄 Target type switches every 20 seconds</div>
+      <div>💡 Every 5 correct = level up!</div>
+      <div>📘 <b>Regular:</b> verb + -ed (e.g. played)</div>
+      <div>📕 <b>Irregular:</b> changes form (e.g. went)</div>
+    </div>
+    <button class="btn" onclick="startGame()">🚀 Start Game</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="endScreen">
+  <div class="modal">
+    <h2 id="endTitle">🎉 Game Over!</h2>
+    <p>⭐ Final Score: <b id="finalScore">0</b></p>
+    <p>✅ Correct: <b id="finalCorrect">0</b></p>
+    <p>❌ Wrong: <b id="finalWrong">0</b></p>
+    <p>🏆 Level Reached: <b id="finalLevel">1</b></p>
+    <p style="font-size:24px;margin-top:10px;" id="stars">⭐⭐⭐</p>
+    <button class="btn" onclick="restartGame()">🔄 Play Again</button>
+  </div>
+</div>
+
+<script>
+const REGULAR = [
+  {base:'collect', past:'collected'},
+  {base:'prepare', past:'prepared'},
+  {base:'clean', past:'cleaned'},
+  {base:'paint', past:'painted'},
+  {base:'tidy', past:'tidied'},
+  {base:'play', past:'played'},
+  {base:'visit', past:'visited'},
+  {base:'live', past:'lived'}
+];
+const IRREGULAR = [
+  {base:'do', past:'did'},
+  {base:'eat', past:'ate'},
+  {base:'buy', past:'bought'},
+  {base:'sleep', past:'slept'},
+  {base:'find', past:'found'},
+  {base:'drive', past:'drove'},
+  {base:'drink', past:'drank'},
+  {base:'go', past:'went'},
+  {base:'run', past:'ran'}
+];
+
+const COLORS = ['#FF6B6B','#4ECDC4','#FFE66D','#A8E6CF','#FF8B94','#B4A7D6','#FFAAA5','#95E1D3','#F38181'];
+
+let score=0, lives=6, timeLeft=60, level=1, correct=0, wrong=0;
+let switchTimer = 20;
+let currentTarget='regular';
+let gameRunning=false;
+let spawnInterval, gameInterval, animFrame;
+let balloons=[];
+let balloonId=0;
+
+const gameArea = document.getElementById('gameArea');
+const scoreEl = document.getElementById('score');
+const livesEl = document.getElementById('lives');
+const timeEl = document.getElementById('time');
+const levelEl = document.getElementById('level');
+const targetEl = document.getElementById('target');
+const switchTimeEl = document.getElementById('switchTime');
+const countdownEl = document.getElementById('countdown');
+
+function setTarget(forceSwitch = false) {
+  if (forceSwitch) {
+    currentTarget = currentTarget === 'regular' ? 'irregular' : 'regular';
+  } else {
+    currentTarget = Math.random() < 0.5 ? 'regular' : 'irregular';
+  }
+  if (currentTarget === 'regular') {
+    targetEl.textContent = '🎯 Pop REGULAR verbs (verb + -ed)';
+    targetEl.className = 'target regular';
+  } else {
+    targetEl.textContent = '🎯 Pop IRREGULAR verbs (changed form)';
+    targetEl.className = 'target irregular';
+  }
+  switchTimer = 20;
+  switchTimeEl.textContent = switchTimer;
+}
+
+function spawnBalloon() {
+  if (!gameRunning) return;
+  
+  const isRegular = Math.random() < 0.5;
+  const list = isRegular ? REGULAR : IRREGULAR;
+  const verb = list[Math.floor(Math.random()*list.length)];
+  
+  const balloon = document.createElement('div');
+  balloon.className = 'balloon';
+  const color = COLORS[Math.floor(Math.random()*COLORS.length)];
+  balloon.style.background = `radial-gradient(circle at 30% 30%, ${color}cc, ${color})`;
+  balloon.style.color = color;
+  
+  const verbSpan = document.createElement('span');
+  verbSpan.textContent = verb.past;
+  verbSpan.style.color = 'white';
+  verbSpan.style.fontSize = verb.past.length > 7 ? '12px' : '14px';
+  balloon.appendChild(verbSpan);
+  
+  const areaWidth = gameArea.clientWidth;
+  const x = Math.random() * (areaWidth - 80);
+  balloon.style.left = x + 'px';
+  balloon.style.bottom = '-100px';
+  
+  // Slower speed: reduced base + smaller level multiplier
+  const speed = 0.25 + Math.random() * 0.25 + level * 0.08;
+  const id = balloonId++;
+  
+  const balloonData = {
+    el: balloon,
+    y: -100,
+    speed: speed,
+    isRegular: isRegular,
+    verb: verb,
+    id: id,
+    popped: false
+  };
+  
+  balloon.addEventListener('click', () => popBalloon(balloonData));
+  balloon.addEventListener('touchstart', (e) => { e.preventDefault(); popBalloon(balloonData); });
+  
+  gameArea.appendChild(balloon);
+  balloons.push(balloonData);
+}
+
+function popBalloon(b) {
+  if (b.popped || !gameRunning) return;
+  b.popped = true;
+  
+  const isCorrect = (b.isRegular && currentTarget === 'regular') || 
+                    (!b.isRegular && currentTarget === 'irregular');
+  
+  const rect = b.el.getBoundingClientRect();
+  const areaRect = gameArea.getBoundingClientRect();
+  const fb = document.createElement('div');
+  fb.className = 'feedback';
+  fb.style.left = (rect.left - areaRect.left + 20) + 'px';
+  fb.style.top = (rect.top - areaRect.top) + 'px';
+  
+  if (isCorrect) {
+    score += 10;
+    correct++;
+    fb.textContent = '+10 ⭐';
+    fb.style.color = '#4CAF50';
+    if (correct % 5 === 0) {
+      level++;
+      levelEl.textContent = level;
+      showLevelUp();
+    }
+  } else {
+    lives--;
+    wrong++;
+    fb.textContent = '❌ -1 ❤️';
+    fb.style.color = '#F44336';
+    if (lives <= 0) {
+      endGame();
+    }
+  }
+  
+  gameArea.appendChild(fb);
+  setTimeout(() => fb.remove(), 1000);
+  
+  b.el.classList.add('popping');
+  setTimeout(() => {
+    b.el.remove();
+    balloons = balloons.filter(x => x.id !== b.id);
+  }, 300);
+  
+  scoreEl.textContent = score;
+  livesEl.textContent = lives;
+}
+
+function showLevelUp() {
+  const lu = document.createElement('div');
+  lu.className = 'feedback';
+  lu.textContent = '🎉 LEVEL UP!';
+  lu.style.color = '#FFD700';
+  lu.style.fontSize = '32px';
+  lu.style.left = '50%';
+  lu.style.top = '40%';
+  lu.style.transform = 'translateX(-50%)';
+  gameArea.appendChild(lu);
+  setTimeout(() => lu.remove(), 1000);
+}
+
+function showSwitchAlert() {
+  const sw = document.createElement('div');
+  sw.className = 'feedback';
+  sw.textContent = '🔄 SWITCH!';
+  sw.style.color = '#FF9800';
+  sw.style.fontSize = '36px';
+  sw.style.left = '50%';
+  sw.style.top = '40%';
+  sw.style.transform = 'translateX(-50%)';
+  gameArea.appendChild(sw);
+  setTimeout(() => sw.remove(), 1000);
+}
+
+function animate() {
+  balloons.forEach(b => {
+    if (b.popped) return;
+    b.y += b.speed;
+    b.el.style.bottom = b.y + 'px';
+    if (b.y > gameArea.clientHeight + 50) {
+      b.popped = true;
+      b.el.remove();
+    }
+  });
+  balloons = balloons.filter(b => !b.popped || b.el.parentNode);
+  if (gameRunning) animFrame = requestAnimationFrame(animate);
+}
+
+function startGame() {
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('readyText').classList.add('hidden');
+  document.getElementById('endScreen').classList.add('hidden');
+  countdownEl.classList.remove('hidden');
+  
+  score=0; lives=6; timeLeft=60; level=1; correct=0; wrong=0;
+  scoreEl.textContent=0; livesEl.textContent=6; timeEl.textContent=60; levelEl.textContent=1;
+  
+  balloons.forEach(b => b.el.remove());
+  balloons = [];
+  
+  gameRunning = true;
+  setTarget();
+  
+  spawnInterval = setInterval(() => {
+    spawnBalloon();
+  }, 1400);
+  
+  // Spawn first few quickly
+  for(let i=0;i<3;i++) setTimeout(spawnBalloon, i*500);
+  
+  gameInterval = setInterval(() => {
+    timeLeft--;
+    timeEl.textContent = timeLeft;
+    
+    switchTimer--;
+    switchTimeEl.textContent = switchTimer;
+    if (switchTimer <= 0 && timeLeft > 0) {
+      setTarget(true);
+      showSwitchAlert();
+    }
+    
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+  
+  animate();
+}
+
+function endGame() {
+  gameRunning = false;
+  clearInterval(spawnInterval);
+  clearInterval(gameInterval);
+  cancelAnimationFrame(animFrame);
+  countdownEl.classList.add('hidden');
+  
+  setTimeout(() => {
+    balloons.forEach(b => b.el.remove());
+    balloons = [];
+  }, 500);
+  
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('finalCorrect').textContent = correct;
+  document.getElementById('finalWrong').textContent = wrong;
+  document.getElementById('finalLevel').textContent = level;
+  
+  let stars = '⭐';
+  if (score >= 50) stars = '⭐⭐';
+  if (score >= 100) stars = '⭐⭐⭐';
+  if (score >= 150) stars = '⭐⭐⭐⭐';
+  if (score >= 200) stars = '⭐⭐⭐⭐⭐';
+  document.getElementById('stars').textContent = stars;
+  
+  document.getElementById('endTitle').textContent = lives <= 0 ? '💔 Game Over!' : '🎉 Time\'s Up!';
+  document.getElementById('endScreen').classList.remove('hidden');
+}
+
+function restartGame() {
+  startGame();
+}
+</script>
+</body>
+</html>
